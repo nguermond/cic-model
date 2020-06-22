@@ -247,7 +247,7 @@ split; intros.
  destruct H0.
  assert (in_set (elts (elts a x) i) (elts a' x0)).
   apply eq_elim with (elts a x); trivial.
-  exists i; apply eq_set_refl. 
+  exists i; apply eq_set_refl.
  destruct H1.
  exists (existT (fun i=>idx (elts a' i)) x0 x1); simpl.
  trivial.
@@ -260,7 +260,7 @@ split; intros.
  destruct H0.
  assert (in_set (elts (elts a' x) i) (elts a x0)).
   apply eq_elim with (elts a' x); trivial.
-  exists i; apply eq_set_refl. 
+  exists i; apply eq_set_refl.
  destruct H1.
  exists (existT (fun i=>idx (elts a i)) x0 x1); simpl.
  apply eq_set_sym; trivial.
@@ -301,7 +301,7 @@ split; intros.
  exists (exist _ i (eq_set_sym _ _ H2)); simpl.
  apply H.
  apply eq_set_sym.
- apply eq_set_trans with y; trivial. 
+ apply eq_set_trans with y; trivial.
  apply eq_set_trans with y'; trivial.
  apply eq_set_sym; trivial.
 Qed.
@@ -461,6 +461,11 @@ split; intros.
   apply eq_set_sym; trivial.
 Qed.
 
+Lemma replf_morph : forall x y F G, eq_set x y ->
+                                    (forall x' y', eq_set x' y' ->
+                                                   eq_set (F x') (G y')) ->
+                                    eq_set (replf x F) (replf y G).
+Admitted.
 
 Definition repl1 (x:set) (F:{y|in_set y x}->set) :=
   sup _ (fun i => F (elts' x i)).
@@ -589,7 +594,7 @@ elim (repl1_ax _ x x0); intros.
    apply eq_set_refl.
 
 (* side conditions *)
- elim (proj2 (proj1 (subset_ax _ _ _) (proj2_sig x))); intros. 
+ elim (proj2 (proj1 (subset_ax _ _ _) (proj2_sig x))); intros.
  destruct H2.
  exists x1; apply H with (4:=H2).
   apply in_reg with (proj1_sig x); trivial.
@@ -734,7 +739,7 @@ exists (f x0); trivial.
 exists x0; apply eq_set_refl.
 Qed.
 
-Lemma coll_ax_ttcoll : forall A (R:set->set->Prop), 
+Lemma coll_ax_ttcoll : forall A (R:set->set->Prop),
     (forall x x' y y', in_set x A ->
      eq_set x x' -> eq_set y y' -> R x y -> R x' y') ->
     (forall x, in_set x A -> exists y, R x y) ->
@@ -780,7 +785,7 @@ End FromTTColl.
 
 Section FromChoice.
 
-Lemma coll_ax_choice : forall A (R:set->set->Prop), 
+Lemma coll_ax_choice : forall A (R:set->set->Prop),
     (forall x x' y y', in_set x A ->
      eq_set x x' -> eq_set y y' -> R x y -> R x' y') ->
     (forall x, in_set x A -> exists y, R x y) ->
@@ -905,7 +910,7 @@ red; auto.
 Qed.
 
 
-Lemma V_compl : forall x z, in_set z (V x) -> in_set (V z) (V x). 
+Lemma V_compl : forall x z, in_set z (V x) -> in_set (V z) (V x).
 intros x.
 pattern x; apply wf_ax; trivial; clear x; intros.
 rewrite V_def in *.
@@ -1020,7 +1025,7 @@ split; [|split].
  apply eq_set_sym; trivial.
 Qed.
 
-Lemma lst_incl : forall P y, lst_rk P y -> P y. 
+Lemma lst_incl : forall P y, lst_rk P y -> P y.
 destruct 1.
 trivial.
 Qed.
@@ -1079,7 +1084,7 @@ destruct (EM (exists z, z ∈ V x /\ P (V z))).
 Qed.
 
 
-Lemma coll_ax : forall A (R:set->set->Prop), 
+Lemma coll_ax : forall A (R:set->set->Prop),
     (forall x x' y y', in_set x A ->
      eq_set x x' -> eq_set y y' -> R x y -> R x' y') ->
     (forall x, in_set x A -> exists y, R x y) ->
@@ -1097,7 +1102,7 @@ assert (Pm : forall x x', x ∈ A -> x == x' -> forall y y', y == y' -> P x y ->
 
   apply H with x x0; trivial.
   apply eq_set_refl.
-assert (Pwit : forall x, x ∈ A -> exists y, P x (V y)). 
+assert (Pwit : forall x, x ∈ A -> exists y, P x (V y)).
  intros.
  destruct (H0 x); trivial.
  exists (singl x0); split; trivial.
@@ -1153,7 +1158,7 @@ destruct (coll_ax (singl x) R); intros; eauto.
  apply H3.
  exists tt; apply eq_set_refl.
 Qed.
- 
+
 End FromReplClassic.
 
 End Collection.

@@ -73,13 +73,17 @@ Proof.
   - apply (B.in_reg (lpart x') (lpart x)). symmetry. trivial. trivial.
 Qed.
 
-Instance eq_set_large_cong : Proper (B.eq_set==>VV_eq_set) large.
+Instance large_cong : Proper (B.eq_set==>VV_eq_set) large.
 Proof.
   intros x y. trivial.
 Qed.
-Instance eq_set_small_cong : Proper (S.eq_set==>VV_eq_set) small.
+Instance small_cong : Proper (S.eq_set==>VV_eq_set) small.
 Proof.
   intros x y. apply (lift_eq x y).
+Qed.
+Instance lpart_cong : Proper (VV_eq_set==>B.eq_set) lpart.
+Proof.
+  intros x y H. trivial.
 Qed.
 
 Lemma lift_VV_empty : VV_eq_set VV_empty (large B.empty).
@@ -207,16 +211,50 @@ Lemma VV_replf_ax : forall a F y, Proper (VV_eq_set==>VV_eq_set) F ->
 Proof.
   intros a F y C.
   remember (fun x => (lpart (F (large x)))) as F'.
-  pose (B.replf_ax (lpart a) F').
+  assert (forall z z', (B.in_set z (lpart a)) -> z == z' -> F' z == F' z').
+  { intros z z' K p.
+    rewrite HeqF'. apply lpart_cong.
+    apply C. apply large_cong. trivial. }
+  pose (B.replf_ax (lpart a) F' (lpart y) H) as K.
+  rewrite HeqF' in K.
+  destruct K as [K0 K1].
+  split; intro L.
+  - destruct (K0 L) as [y0 p].
+    exists (large y0). trivial. trivial.
+  - apply K1. destruct L as [x0 p].
+    exists (lpart x0). trivial. apply lpart_cong.
+    rewrite VV_eq_lpart. trivial.
+Qed.
+
+(* we need intensional equality on F *)
+Instance VV_replf_cong : Proper (VV_eq_set==>eq==>VV_eq_set) VV_replf.
+(* use B.replf_morph *)
 Admitted.
 
 Definition VV_U : VV := large U.
+
+Lemma VV_U_char : forall x, (VV_in_set x VV_U) <->
+                                        (exists x', (VV_eq_set x (small x'))).
+Admitted.
 
 Definition intensionally_small (x : VV) : Prop :=
   match x with
   | small _ => True
   | large _ => False
   end.
+
+(* The converse does not hold! *)
+Lemma int_small_in_VV_U : forall x, (intensionally_small x) -> (VV_in_set x VV_U).
+Admitted.
+
+Lemma spart_int_retraction (x : VV) : (intensionally_small x) ->
+                                      (VV_eq_set (small (spart x)) x).
+Proof.
+  intro H.
+  destruct x as [sx|lx].
+  - reflexivity.
+  - split; contradiction.
+Qed.
 
 Record VV_grot_univ (U : VV) : Prop :=
   {G_trans : forall x y, (VV_in_set y x) -> (VV_in_set x VV_U) ->
@@ -231,10 +269,23 @@ Record VV_grot_univ (U : VV) : Prop :=
        (VV_in_set (VV_union (VV_replf I F)) VV_U)
   }.
 
-Lemma VV_U_union_weak_replf :
+Lemma VV_U_weak_replf :
   forall a F, Proper (VV_eq_set==>VV_eq_set) F ->
               (VV_in_set a VV_U) ->
               (forall x, (intensionally_small (F x))) ->
-              (VV_in_set (VV_union (VV_replf a F)) VV_U).
+              (VV_in_set (VV_replf a F) VV_U).
 Proof.
+  intros a F C H K.
+  destruct (VV_U_char a) as [L0 L1].
+  destruct (L0 H) as [I L2].
+  destruct (VV_U_char (VV_replf a F)) as [M0 M1].
+  apply M1.
+  exists (S.replf I (compose spart (compose F small))).
+  rewrite L2.
+  unfold VV_replf.
+  remember (fun x => (lpart (F (large x)))) as F'.
+  unfold lpart.
+  (* Check replf_equiv. *)
+  (* rewrite replf_equiv. unfold VV_eq_set. simpl. *)
+  (* apply lpart_cong. *)
 Admitted.
