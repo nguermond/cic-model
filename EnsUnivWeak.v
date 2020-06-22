@@ -285,7 +285,17 @@ Proof.
   unfold VV_replf.
   remember (fun x => (lpart (F (large x)))) as F'.
   unfold lpart.
-  (* Check replf_equiv. *)
-  (* rewrite replf_equiv. unfold VV_eq_set. simpl. *)
-  (* apply lpart_cong. *)
-Admitted.
+  rewrite replf_equiv. unfold VV_eq_set. simpl.
+  split; intro i; exists i; reflexivity.
+  rewrite HeqF'.
+  intro x.
+  pose (spart_int_retraction (F (small x))).
+  assert (forall w, (injU w) = (lpart (small w))).
+  { intro w. trivial. }
+  unfold compose.
+  rewrite (H0 (spart (F (small x)))).
+  apply lpart_cong.
+  rewrite v. apply C.
+  unfold VV_eq_set. reflexivity.
+  apply K.
+Qed.
