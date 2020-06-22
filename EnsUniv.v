@@ -10,6 +10,38 @@ Require Import basic.
 Require Ens0.
 Require Ens.
 
+Module set_equality.
+  Import Ens.IZF_R.
+  Instance eq_set_equivalence : Equivalence eq_set.
+  Proof.
+    split.
+    - intros x. apply eq_set_refl.
+    - intros x y. apply eq_set_sym.
+    - intros x y z. apply eq_set_trans.
+  Qed.
+
+  Instance in_set_cong : Proper (eq_set==>eq_set==>iff) in_set.
+  Proof.
+    split; intro; apply (eq_set_ax x0 y0); trivial.
+    - apply (in_reg x y x0). trivial. trivial.
+    - apply (in_reg y x y0). symmetry. trivial. trivial.
+  Qed.
+
+  Instance union_cong : Proper (eq_set==>eq_set) union.
+  Proof.
+    intros x y H.
+    apply union_morph. trivial.
+  Qed.
+
+  Instance pair_cong : Proper (eq_set==>eq_set==>eq_set) pair.
+  Proof.
+    intros x x' p y y' q.
+    apply pair_morph. trivial. trivial.
+  Qed.
+End set_equality.
+
+Import set_equality.
+
 (** Level 1: small sets *)
 Module S := Ens0.IZF_R.
 (** Level 2 : big sets *)
@@ -87,6 +119,11 @@ exists (f x0); trivial.
 apply down_in.
 apply B.eq_elim with y; trivial.
 apply B.in_reg with x; trivial.
+Qed.
+
+Lemma empty_equiv : injU S.empty == B.empty.
+Proof.
+  split. contradiction. contradiction.
 Qed.
 
 (** With the following, the universe of small sets is lower than (or equal to)
@@ -210,7 +247,7 @@ apply B.eq_intro; intros.
  destruct H1.
  assert (y ∈ injU x0).
   apply B.eq_elim with z; trivial.
- specialize injU_elim with (1:=H2); intro. 
+ specialize injU_elim with (1:=H2); intro.
  apply U_elim in H3.
  destruct H3.
  apply B.in_reg with (injU x1).
@@ -243,6 +280,26 @@ split; simpl; intros.
  exists x; simpl.
  apply H0; simpl; trivial.
 Qed.
+
+Lemma num_equiv (n : nat) : injU (S.num n) == B.num n.
+Proof.
+  induction n.
+  - split. contradiction. contradiction.
+  - unfold S.num. rewrite <- union_equiv.
+    rewrite <- pair_equiv.
+    rewrite <- pair_equiv.
+    fold S.num.
+    rewrite IHn.
+    reflexivity.
+Qed.
+
+Lemma infinity_equiv : injU S.infinity == B.infinity.
+Proof.
+  simpl. split.
+  - intro i. exists i. apply num_equiv.
+  - intro j. exists j. apply num_equiv.
+Qed.
+
 
 (* Closure properties of U *)
 
@@ -323,7 +380,7 @@ destruct S.repl_ax with x (fun x y => R (injU x) (injU y)) as (b,Hb).
  exists (injU b).
   apply U_intro.
 
-  split; intros. 
+  split; intros.
    apply U_elim in H2; destruct H2.
    generalize (B.in_reg _ _ _ H2 H3); intro.
    apply down_in in H4.
@@ -452,7 +509,7 @@ constructor.
    as (B,HB).
   intros.
   destruct H6.
-  assert (injU x' ∈ I).  
+  assert (injU x' ∈ I).
    apply B.eq_elim with (injU x).
    2:apply B.eq_set_sym; trivial.
    apply lift_in.
