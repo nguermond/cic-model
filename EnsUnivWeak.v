@@ -418,34 +418,34 @@ Proof.
   contradiction.
 Qed.
 
-Lemma replf_equiv : forall a f F,
-    (forall x, F (injU x) == injU (f x)) ->
-    B.replf (injU a) F == injU (S.replf a f).
-Proof.
-Admitted.
+(* Lemma replf_equiv : forall a f F, *)
+(*     (forall x, F (injU x) == injU (f x)) -> *)
+(*     B.replf (injU a) F == injU (S.replf a f). *)
+(* Proof. *)
+(* Admitted. *)
 
-Lemma VV_lift_S_replf (a : VV) (F : VV -> VV) :
-  Proper (VV_eq_set==>VV_eq_set) F ->
-  (int_small a) -> (forall x, (int_small x) -> (int_small (F x))) ->
-  (VV_eq_set (VV_S_replf a F) (VV_B_replf a F)).
-Proof.
-  intros C Sa H.
-  destruct a as [sa|la].
-  { unfold VV_eq_set, VV_S_replf, VV_B_replf, compose, lpart.
-    rewrite replf_equiv. reflexivity.
-    { intro x. fold (lpart (F (large (injU x)))). simpl.
-      specialize (H (small x) I).
-      assert ((injU (spart (F (small x)))) == (lpart (F (small x)))) as R.
-      { unfold lpart.
-        revert H.
-        destruct (F (small x)).
-        - reflexivity.
-        - contradiction. }
-      assert (VV_eq_set (F (large (injU x))) (F (small x))) as R'.
-      { apply C. unfold VV_eq_set. reflexivity. }
-      rewrite R', R. reflexivity. } }
-  contradiction.
-Qed.
+(* Lemma VV_lift_S_replf (a : VV) (F : VV -> VV) : *)
+(*   Proper (VV_eq_set==>VV_eq_set) F -> *)
+(*   (int_small a) -> (forall x, (int_small x) -> (int_small (F x))) -> *)
+(*   (VV_eq_set (VV_S_replf a F) (VV_B_replf a F)). *)
+(* Proof. *)
+(*   intros C Sa H. *)
+(*   destruct a as [sa|la]. *)
+(*   { unfold VV_eq_set, VV_S_replf, VV_B_replf, compose, lpart. *)
+(*     rewrite replf_equiv. reflexivity. *)
+(*     { intro x. fold (lpart (F (large (injU x)))). simpl. *)
+(*       specialize (H (small x) I). *)
+(*       assert ((injU (spart (F (small x)))) == (lpart (F (small x)))) as R. *)
+(*       { unfold lpart. *)
+(*         revert H. *)
+(*         destruct (F (small x)). *)
+(*         - reflexivity. *)
+(*         - contradiction. } *)
+(*       assert (VV_eq_set (F (large (injU x))) (F (small x))) as R'. *)
+(*       { apply C. unfold VV_eq_set. reflexivity. } *)
+(*       rewrite R', R. reflexivity. } } *)
+(*   contradiction. *)
+(* Qed. *)
 
 Lemma VV_repl1_ax (a : VV) (F : (el a) -> VV) : forall y,
   (forall x x', (VV_eq_set (proj1_sig x) (proj1_sig x')) ->
@@ -496,19 +496,42 @@ Proof.
     rewrite VV_eq_lpart. trivial.
 Qed.
 
-(* On pourrait utiliser une égalité extensionelle sur F *)
-Instance VV_replf_cong : Proper (VV_eq_set==>eq==>VV_eq_set) VV_B_replf.
-(* use B.replf_morph *)
-Admitted.
+(* (* On pourrait utiliser une égalité extensionelle sur F *) *)
+(* Instance VV_replf_cong : Proper (VV_eq_set==>eq==>VV_eq_set) VV_B_replf. *)
+(* (* use B.replf_morph *) *)
+(* Admitted. *)
+
+Definition tr_el : forall a a', (VV_eq_set a a') -> (el a) -> (el a').
+Proof.
+  intros a a' H x.
+  destruct x.
+  apply (exist _ x).
+  apply (VV_eq_set_ax a a').
+  trivial. trivial.
+Defined.
 
 
 Lemma VV_repl1_cong : forall a a' F F',
     (VV_eq_set a a') ->
     (forall x x', (VV_eq_set (proj1_sig x) (proj1_sig x')) ->
-                  VV_eq_set (F x) (F x')) ->
+                  VV_eq_set (F x) (F' x')) ->
     (VV_eq_set (VV_B_repl1 a F) (VV_B_repl1 a' F')).
 Proof.
-Admitted.
+  intros a a' F F' H L.
+  unfold VV_B_repl1.
+  rewrite (B.repl1_morph (lpart a) (lpart a')
+                         (compose lpart (compose F B_el))
+                         (compose lpart (compose F' B_el))).
+  reflexivity.
+  apply H.
+  intros x y K.
+  unfold compose. apply lpart_cong.
+  apply symmetry in H.
+  apply (L (B_el x) (B_el y)).
+  destruct x,y.
+  simpl in *.
+  apply K.
+Qed.
 
 Definition VV_U : VV := large U.
 
@@ -572,16 +595,7 @@ Proof.
   trivial.
 Qed.
 
-Definition tr_el : forall a a', (VV_eq_set a a') -> (el a) -> (el a').
-Proof.
-  intros a a' H x.
-  destruct x.
-  apply (exist _ x).
-  apply (VV_eq_set_ax a a').
-  trivial. trivial.
-Defined.
-
-Lemma VV_U_repl1 : forall a F,
+Lemma VV_U_wrepl1 : forall a F,
     (forall x x', (VV_eq_set (proj1_sig x) (proj1_sig x')) ->
                   (VV_eq_set (F x) (F x'))) ->
     (VV_in_set a VV_U) ->
@@ -594,41 +608,52 @@ Proof.
   destruct Sa as [sa p].
   apply symmetry in p.
   rewrite  (VV_repl1_cong a (small sa) F (compose F (tr_el _ _ p))).
-  { rewrite <- (VV_lift_S_repl1 (small sa) (compose F (tr_el _ _ p)) I).
-    - unfold VV_S_repl1. apply (VV_U_elim).
+  - rewrite <- (VV_lift_S_repl1 (small sa) (compose F (tr_el _ _ p)) I).
+    + unfold VV_S_repl1. apply (VV_U_elim).
       exists (S.repl1 sa (fun x => spart (F (tr_el _ _ p (S_el x))))).
       reflexivity.
-    - unfold Spart, compose. simpl.
+    + unfold Spart, compose. simpl.
       intros x y H.
       apply C.
-      unfold tr_el. simpl.
-Admitted.
-
-Lemma VV_U_wreplf :
-  forall a F, Proper (VV_eq_set==>VV_eq_set) F ->
-              (VV_in_set a VV_U) ->
-              (forall x, (int_small x) -> (int_small (F x))) ->
-              (VV_in_set (VV_B_replf a F) VV_U).
-Proof.
-  intros a F C H SH.
-  destruct (VV_U_elim a) as [L0 L1].
-  destruct (L0 H) as [I L2].
-  apply (VV_U_elim (VV_B_replf a F)).
-  exists (S.replf I (compose spart (compose F small))).
-  rewrite L2.
-  unfold VV_B_replf, lpart.
-  rewrite replf_equiv.
-  split; intro i; exists i; reflexivity.
-  intro x.
-  assert (forall w, (injU w) = (lpart (small w))).
-  {  trivial. }
-  unfold compose.
-  rewrite (H0 (spart (F (small x)))).
-  apply lpart_cong.
-  rewrite (spart_int_small (F (small x))).
-  apply C. unfold VV_eq_set. reflexivity.
-  apply SH. simpl. auto.
+      destruct x, y.
+      unfold tr_el. simpl in *.
+      apply H.
+    + unfold Spart, compose. simpl.
+      intro x.
+      specialize (SF (tr_el _ _ p x)).
+      trivial.
+  - symmetry. trivial.
+  - intros x x' H.
+    apply (C x (tr_el (small sa) a p x')).
+    destruct x, x'.
+    trivial.
 Qed.
+
+(* Lemma VV_U_wreplf : *)
+(*   forall a F, Proper (VV_eq_set==>VV_eq_set) F -> *)
+(*               (VV_in_set a VV_U) -> *)
+(*               (forall x, (int_small x) -> (int_small (F x))) -> *)
+(*               (VV_in_set (VV_B_replf a F) VV_U). *)
+(* Proof. *)
+(*   intros a F C H SH. *)
+(*   destruct (VV_U_elim a) as [L0 L1]. *)
+(*   destruct (L0 H) as [I L2]. *)
+(*   apply (VV_U_elim (VV_B_replf a F)). *)
+(*   exists (S.replf I (compose spart (compose F small))). *)
+(*   rewrite L2. *)
+(*   unfold VV_B_replf, lpart. *)
+(*   rewrite replf_equiv. *)
+(*   split; intro i; exists i; reflexivity. *)
+(*   intro x. *)
+(*   assert (forall w, (injU w) = (lpart (small w))). *)
+(*   {  trivial. } *)
+(*   unfold compose. *)
+(*   rewrite (H0 (spart (F (small x)))). *)
+(*   apply lpart_cong. *)
+(*   rewrite (spart_int_small (F (small x))). *)
+(*   apply C. unfold VV_eq_set. reflexivity. *)
+(*   apply SH. simpl. auto. *)
+(* Qed. *)
 
 Lemma VV_U_union_wrepl1 : forall a F,
       (forall x x', (VV_eq_set (proj1_sig x) (proj1_sig x')) ->
@@ -637,19 +662,23 @@ Lemma VV_U_union_wrepl1 : forall a F,
       (forall x, (int_small (F x))) ->
       (VV_in_set (VV_union (VV_B_repl1 a F)) VV_U).
 Proof.
-Admitted.
-
-Lemma VV_U_union_wreplf : forall I F,
-    (Proper (VV_eq_set==>VV_eq_set) F) ->
-    (VV_in_set I VV_U) ->
-    (forall x, (int_small x) -> (int_small (F x))) ->
-    (VV_in_set (VV_union (VV_B_replf I F)) VV_U).
-Proof.
-  intros I F C H SH.
+  intros a F C H SH.
   apply VV_U_union.
-  apply VV_U_wreplf.
+  apply VV_U_wrepl1.
   trivial. trivial. trivial.
 Qed.
+
+(* Lemma VV_U_union_wreplf : forall I F, *)
+(*     (Proper (VV_eq_set==>VV_eq_set) F) -> *)
+(*     (VV_in_set I VV_U) -> *)
+(*     (forall x, (int_small x) -> (int_small (F x))) -> *)
+(*     (VV_in_set (VV_union (VV_B_replf I F)) VV_U). *)
+(* Proof. *)
+(*   intros I F C H SH. *)
+(*   apply VV_U_union. *)
+(*   apply VV_U_wreplf. *)
+(*   trivial. trivial. trivial. *)
+(* Qed. *)
 
 
 Theorem VV_U_weak_grot_univ : VV_weak_grot_univ VV_U.
