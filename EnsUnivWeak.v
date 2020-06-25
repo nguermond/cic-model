@@ -1,3 +1,30 @@
+(* Construct a model of IZF + one grothendieck universe
+   with the weakened version of functional replacement repl1,
+   which is slightly stronger than replf.
+
+   The construction is the disjoint union VV := S.set + B.set of
+   small sets and large sets, with VV_eq_set a quotienting relation
+   identifying x : S.set with (injU x) : B.set.
+   The element relation VV_in_set is well defined wrt VV_eq_set.
+
+   In this construction we can decide whether a set is intensionally small,
+   which is a weak notion of smallness.
+   This means for every operation (except for repl1) we have
+   - an intensionally small version VV_S_*
+   - an extensional version VV_B_* which is intensionally large
+   - an extensional version VV_* which preserves intensional smallness.
+   We cannot define an extensional replacement that preserves intensional smallness
+   because this requires deciding whether a function has intensionally small values.
+
+   Intensional smallness allows us to build a "weak" Grothendieck universe
+   S.set of small sets, in the sense that it is not closed under full replacement,
+   nor even repl1, but it is closed under (repl1 a F) provided the values of the
+   function F are intensionally small. This is because we have
+     F : VV -> VV, with image in the universe VV_U, but we need a
+   factorization F' : VV -> S.set such that injU o F' = F. This is only
+   possible if F takes intensionally small values. *)
+
+
 Require Import basic.
 Require Import EnsUniv.
 
