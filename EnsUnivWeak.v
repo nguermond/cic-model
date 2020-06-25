@@ -288,18 +288,30 @@ Proof.
   apply B.infty_ax1.
 Qed.
 
-Instance VV_union_cong : Proper (VV_eq_set==>VV_eq_set) VV_union.
-Proof.
-Admitted.
-
 Instance VV_pair_cong : Proper (VV_eq_set==>VV_eq_set==>VV_eq_set) VV_pair.
 Proof.
-Admitted.
+  intros x x' H.
+  intros y y' K.
+  repeat rewrite ext_VV_pair.
+  apply (B.pair_morph).
+  apply H. apply K.
+Qed.
 
 Instance VV_B_pair_cong : Proper (VV_eq_set==>VV_eq_set==>VV_eq_set) VV_B_pair.
 Proof.
-Admitted.
+  intros x x' H y y' K.
+  repeat rewrite <- ext_VV_pair.
+  apply VV_pair_cong. trivial. trivial.
+Qed.
 
+
+Instance VV_union_cong : Proper (VV_eq_set==>VV_eq_set) VV_union.
+Proof.
+  intros x x' H.
+  repeat rewrite ext_VV_union.
+  apply B.union_morph.
+  apply H.
+Qed.
 
 Lemma VV_infinity_ax2 : forall x, (VV_in_set x VV_infinity) ->
                                   (VV_in_set (VV_union (VV_pair x (VV_pair x x)))
