@@ -461,12 +461,6 @@ split; intros.
   apply eq_set_sym; trivial.
 Qed.
 
-Lemma replf_morph : forall x y F G, eq_set x y ->
-                                    (forall x' y', eq_set x' y' ->
-                                                   eq_set (F x') (G y')) ->
-                                    eq_set (replf x F) (replf y G).
-Admitted.
-
 Definition repl1 (x:set) (F:{y|in_set y x}->set) :=
   sup _ (fun i => F (elts' x i)).
 

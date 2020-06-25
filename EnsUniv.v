@@ -281,11 +281,6 @@ split; simpl; intros.
  apply H0; simpl; trivial.
 Qed.
 
-Lemma replf_equiv : forall a f F,
-    (forall x, F (injU x) == injU (f x)) ->
-    B.replf (injU a) F == injU (S.replf a f).
-Admitted.
-
 Lemma num_equiv (n : nat) : injU (S.num n) == B.num n.
 Proof.
   induction n.
