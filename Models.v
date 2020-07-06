@@ -198,3 +198,41 @@ Parameter natrec_S : forall f g n,
 End Nat_Model.
 
 Module Type CCNat_Model := CC_Model <+ Nat_Model.
+
+
+(* CC + one universe, with typed abstraction and products *)
+Module Type CCU_Sig (Import S : Sets).
+  Include (CC_Sig S).
+
+  Parameter type0 : X.
+
+  (* small abstraction and product *)
+  Parameter S_lam : X -> (X -> X) -> X.
+  Parameter S_prod : X -> (X -> X) -> X.
+End CCU_Sig.
+
+Module Type CCU_Terms := Sets <+ CCU_Sig.
+
+Module Type CCU_Properties (Import T : CCU_Terms).
+  Include (CC_Properties T).
+
+  Parameter props_in_type0 : props ∈ type0.
+  Parameter type_incl_props : inclX props type0.
+
+  Parameter S_prod_in_type0 : forall (A : X) (F : X -> X),
+      (eq_fun A F F) -> (inX A type0) ->
+      (forall x, (inX x A) -> (inX (F x) type0)) ->
+      (inX (S_prod A F) type0).
+
+  Parameter lift_S_lam : forall (A : X) (f : X -> X),
+      (eq_fun A f f) -> (inX A type0) ->
+      (forall x, (inX x A) -> (inX (f x) type0)) ->
+      (eqX (S_lam A f) (lam A f)).
+
+  Parameter lift_S_prod : forall (A : X) (F : X -> X),
+      (eq_fun A F F) -> (inX A type0) ->
+      (forall x, (inX x A) -> (inX (F x) type0)) ->
+      (eqX (S_prod A F) (prod A F)).
+End CCU_Properties.
+
+Module Type CCU_Model := CCU_Terms <+ CCU_Properties.

@@ -1,6 +1,7 @@
 Require Export basic.
 Require Import Sublogic.
 
+
 (** This module defines interfaces implementing various flavour
    of set theory, from Zermelo to IZF_R and IZF_C (ZF)
  *)
@@ -171,7 +172,7 @@ Include Zermelo_sig L.
 Import L.
 
 Parameter
- (coll_ex : forall A (R:set->set->Prop), 
+ (coll_ex : forall A (R:set->set->Prop),
     Proper (eq_set ==> eq_set ==> iff) R ->
     #exists B, forall x, x ∈ A ->
          (#exists y, R x y) -> #exists2 y, y ∈ B & R x y).
@@ -186,7 +187,7 @@ Import L.
 
 Parameter
  (coll : set -> (set->set->Prop) -> set)
- (coll_ax : forall A R, 
+ (coll_ax : forall A R,
     Proper (eq_set==>eq_set==>iff) R ->
     forall x, x ∈ A ->
       (#exists y, R x y) -> #exists2 y, y ∈ coll A R & R x y).
@@ -206,3 +207,48 @@ Parameter
 End Choice_Sig.
 
 (* end hide *)
+
+
+(* IZF with functional replacement *)
+Module Type IZF_FR_sig (L:SublogicTheory).
+  Include Zermelo_sig L.
+  Import L.
+
+  Parameter repl1 : forall (a : set), ({x : set | in_set x a} -> set) -> set.
+
+  Parameter repl1_ax : forall a F y,
+      (forall x x', eq_set (proj1_sig x) (proj1_sig x') ->
+                    eq_set (F x) (F x')) ->
+      (in_set y (repl1 a F) <-> (exists x, eq_set y (F x))).
+End IZF_FR_sig.
+
+(* IZF with one universe
+   *note*: this is a *typed* set theory *)
+Module Type IZFU_sig (L:SublogicTheory).
+  Import L.
+  Include (Zermelo_sig L).
+
+  (* Intensionally small sets *)
+  Parameter S_set : set -> Prop.
+
+  Parameter
+    (S_repl1 : forall (a : set), ({x : set | x ∈ a} -> set) -> set)
+    (repl1 : forall (a : set), ({x : set | x ∈ a} -> set) -> set).
+
+  Parameter
+    (lift_S_repl1 : forall a F, (S_set a) -> (forall x, (S_set (F x)))
+                                -> (S_repl1 a F == repl1 a F))
+    (repl1_ax : forall a F y,
+        (forall x x', (proj1_sig x) == (proj1_sig x') -> (F x) == (F x'))
+        -> (y ∈ (repl1 a F) <-> (exists x, y == (F x)))).
+
+  Parameter
+    (empty_type : S_set empty)
+    (pair_type : forall x y, S_set x -> S_set y -> S_set (pair x y))
+    (union_type : forall x, S_set x -> S_set (union x))
+    (subset_type : forall x P, S_set x -> S_set (subset x P))
+    (infinite_type : S_set infinite)
+    (power_type : forall x, S_set x -> S_set (power x))
+    (S_repl1_type : forall a F, (S_set (S_repl1 a F))).
+
+End IZFU_sig.

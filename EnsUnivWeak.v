@@ -28,6 +28,9 @@
 Require Import basic.
 Require Import EnsUniv.
 
+Require Import ZFdef.
+Require Import Sublogic.
+
 Inductive VV :=
 | small : S.set -> VV
 | large : B.set -> VV.
@@ -194,7 +197,7 @@ Proof.
   contradiction (B.empty_ax (lpart x)).
 Qed.
 
-Lemma VV_lift_S_pair : forall a b, (int_small a) /\ (int_small b) ->
+Lemma lift_VV_S_pair : forall a b, (int_small a) /\ (int_small b) ->
                                    (VV_eq_set (VV_S_pair a b) (VV_B_pair a b)).
 Proof.
   intros a b [Sa Sb].
@@ -207,7 +210,7 @@ Qed.
 Lemma ext_VV_pair : forall a b, (VV_eq_set (VV_pair a b) (VV_B_pair a b)).
 Proof.
   destruct a as [sa|la]; destruct b as [sb|lb]; unfold VV_pair; simpl.
-  { rewrite VV_lift_S_pair. reflexivity. simpl. auto. }
+  { rewrite lift_VV_S_pair. reflexivity. simpl. auto. }
   reflexivity. reflexivity. reflexivity.
 Qed.
 
@@ -219,7 +222,7 @@ Proof.
   apply (B.pair_ax (lpart a) (lpart b) (lpart x)).
 Qed.
 
-Lemma VV_lift_S_union : forall a, (int_small a) ->
+Lemma lift_VV_S_union : forall a, (int_small a) ->
                                   (VV_eq_set (VV_S_union a) (VV_B_union a)).
 Proof.
   intros a H.
@@ -232,7 +235,7 @@ Qed.
 Lemma ext_VV_union : forall a, (VV_eq_set (VV_union a) (VV_B_union a)).
 Proof.
   destruct a as [sa|la]; unfold VV_union; simpl.
-  { rewrite VV_lift_S_union. reflexivity. simpl. auto. }
+  { rewrite lift_VV_S_union. reflexivity. simpl. auto. }
   reflexivity.
 Qed.
 
@@ -254,7 +257,7 @@ Qed.
 
 
 
-Lemma VV_lift_S_subset : forall a P, (int_small a) ->
+Lemma lift_VV_S_subset : forall a P, (int_small a) ->
                                    Proper (VV_eq_set==>iff) P ->
                                    (VV_eq_set (VV_S_subset a P) (VV_B_subset a P)).
 Proof.
@@ -267,13 +270,20 @@ Proof.
   contradiction.
 Qed.
 
+(* Proper is too strong *)
 Lemma ext_VV_subset : forall a P, Proper (VV_eq_set==>iff) P ->
                                   (VV_eq_set (VV_subset a P) (VV_B_subset a P)).
 Proof.
   destruct a as [sa|la]; intros P C; unfold VV_subset; simpl.
-  { rewrite VV_lift_S_subset. reflexivity. simpl. auto. trivial. }
+  { rewrite lift_VV_S_subset. reflexivity. simpl. auto. trivial. }
   reflexivity.
 Qed.
+
+(* Proper is too strong. Replace with: *)
+Lemma VV_subset_ax' : forall (a : VV) (P : VV -> Prop) (x : VV),
+    VV_in_set x (VV_subset a P) <->
+    VV_in_set x a /\ (exists2 x', VV_eq_set x x' & P x').
+Admitted.
 
 Lemma VV_subset_ax : forall a P x, (Proper (VV_eq_set==>iff) P) ->
                                 ((VV_in_set x (VV_subset a P)) <->
@@ -295,7 +305,7 @@ Proof.
       rewrite <- (VV_eq_lpart x) in K. apply K.
 Qed.
 
-Lemma VV_lift_S_infinity : VV_eq_set VV_S_infinity VV_B_infinity.
+Lemma lift_VV_S_infinity : VV_eq_set VV_S_infinity VV_B_infinity.
 Proof.
   unfold VV_eq_set, VV_S_infinity, VV_B_infinity.
   rewrite infinity_equiv.
@@ -304,7 +314,7 @@ Qed.
 
 Lemma ext_VV_infinity : VV_eq_set VV_infinity VV_B_infinity.
 Proof.
-  rewrite VV_lift_S_infinity.
+  rewrite lift_VV_S_infinity.
   reflexivity.
 Qed.
 
@@ -350,7 +360,7 @@ Proof.
   apply (B.infty_ax2 (lpart x)). trivial.
 Qed.
 
-Lemma VV_lift_S_power : forall a, (int_small a) ->
+Lemma lift_VV_S_power : forall a, (int_small a) ->
                                   (VV_eq_set (VV_S_power a) (VV_B_power a)).
 Proof.
   intros a Sa.
@@ -362,7 +372,7 @@ Qed.
 
 Lemma ext_VV_power : forall a, VV_eq_set (VV_power a) (VV_B_power a).
   destruct a as [sa|la]; unfold VV_power; simpl.
-  { rewrite VV_lift_S_power. reflexivity. simpl. auto. }
+  { rewrite lift_VV_S_power. reflexivity. simpl. auto. }
   reflexivity.
 Qed.
 
@@ -378,6 +388,31 @@ Proof.
   - apply H.
     intro y. apply (K (large y)).
 Qed.
+
+Lemma VV_wf_ax' : forall (P : VV -> Prop),
+    (forall x, (forall y, (VV_in_set y x) -> P y) -> P x) -> (forall x, P x).
+Admitted.
+(* Proof. *)
+(*   intros P H. *)
+(*   pose (B.wf_ax) as Ax. *)
+(*   intro x. *)
+(*   assert (forall x : B.set, (forall y : B.set, B.in_set y x -> P (large y)) *)
+(*                             -> P (large x)). *)
+(*   { intro x0. intro K. *)
+(*     apply (H (large x0)). *)
+(*     destruct y as [sy|ly]. *)
+(*     - intro L. *)
+(*       apply (H (small sy)). *)
+(*       apply L. *)
+(*     - intro L. *)
+(*       apply (K ly). *)
+(*       apply L. } *)
+(*     apply *)
+(*   rewrite <- VV_eq_lpart. apply Ax. *)
+(*   intros x' K. apply H. *)
+(*   intro y. rewrite <- VV_eq_lpart. apply K. *)
+(* Qed. *)
+
 
 Lemma VV_wf_ax : forall (P : VV -> Prop),
     Proper (VV_eq_set==>iff) P ->
@@ -431,7 +466,7 @@ Definition VV_B_replf (a : VV) (F : VV -> VV) : VV :=
 (* B_el (a : B.set) : {x : B.set | B.in_set x a} -> el (large a) *)
 (* S_el (a : S.set) : {x : S.set | S.in_set x a} -> el (small a) *)
 (* inj_el (a : VV) : int_small a -> el a -> el (Spart a) *)
-Lemma VV_lift_S_repl1 :
+Lemma lift_VV_S_repl1 :
   forall (a : VV) (F : (el (Spart a)) -> VV) (p : int_small a),
     (forall (x y : (el (Spart a))),
         (VV_eq_set (proj1_sig x) (proj1_sig y)) -> (VV_eq_set (F x) (F y))) ->
@@ -463,7 +498,7 @@ Qed.
 (* Proof. *)
 (* Admitted. *)
 
-(* Lemma VV_lift_S_replf (a : VV) (F : VV -> VV) : *)
+(* Lemma lift_VV_S_replf (a : VV) (F : VV -> VV) : *)
 (*   Proper (VV_eq_set==>VV_eq_set) F -> *)
 (*   (int_small a) -> (forall x, (int_small x) -> (int_small (F x))) -> *)
 (*   (VV_eq_set (VV_S_replf a F) (VV_B_replf a F)). *)
@@ -647,7 +682,7 @@ Proof.
   destruct Sa as [sa p].
   apply symmetry in p.
   rewrite  (VV_repl1_cong a (small sa) F (compose F (tr_el _ _ p))).
-  - rewrite <- (VV_lift_S_repl1 (small sa) (compose F (tr_el _ _ p)) I).
+  - rewrite <- (lift_VV_S_repl1 (small sa) (compose F (tr_el _ _ p)) I).
     + unfold VV_S_repl1. apply (VV_U_elim).
       exists (S.repl1 sa (fun x => spart (F (tr_el _ _ p (S_el x))))).
       reflexivity.
@@ -728,3 +763,98 @@ Proof.
   - apply VV_U_power.
   - apply VV_U_union_wrepl1.
 Qed.
+
+
+
+Lemma int_small_VV_empty : int_small VV_empty.
+Proof. simpl. trivial. Qed.
+
+Lemma int_small_VV_infinity : int_small VV_infinity.
+Proof. simpl. trivial. Qed.
+
+Lemma int_small_VV_pair (x y : VV) : (int_small x) -> (int_small y)
+                                     ->(int_small (VV_pair x y)).
+Proof.
+  destruct x,y. simpl. trivial.
+  contradiction. contradiction. contradiction.
+Qed.
+
+Lemma int_small_VV_union (x : VV) : (int_small x) ->
+                                      (int_small (VV_union x)).
+Proof. destruct x. simpl. trivial. contradiction. Qed.
+
+Lemma int_small_VV_subset (x : VV) P : (int_small x) ->
+                                         (int_small (VV_subset x P)).
+Proof. destruct x. simpl. trivial. contradiction. Qed.
+
+Lemma int_small_VV_power (x : VV) : (int_small x) ->
+                                      (int_small (VV_power x)).
+Proof. destruct x. simpl. trivial. contradiction. Qed.
+
+Lemma int_small_VV_S_replf (a : VV) F : int_small (VV_S_replf a F).
+Proof. simpl. trivial. Qed.
+
+Lemma int_small_VV_S_repl1 (a : VV) F : int_small (VV_S_repl1 a F).
+Proof. simpl. trivial. Qed.
+
+Lemma int_small_VV_U_intro (x : VV) :
+  (int_small x) -> (VV_in_set x VV_U).
+Proof. destruct x. intro. apply VV_U_elim.
+       exists s. reflexivity. contradiction.
+Qed.
+
+Module IZFU_Model <: (IZFU_sig CoqSublogicThms).
+  Definition set := VV.
+  Definition eq_set := VV_eq_set.
+  Definition in_set := VV_in_set.
+
+  Definition S_set := int_small.
+
+  Notation "x ∈ y" :=  (in_set x y).
+  Notation "x == y" := (eq_set x y).
+
+  Definition eq_set_ax := VV_eq_set_ax.
+  Lemma in_reg : forall a a' b, a == a' -> a ∈ b -> a' ∈ b.
+  Proof. intros. rewrite <- H. trivial. Qed.
+
+  Definition empty := VV_empty.
+  Definition pair := VV_pair.
+  Definition union := VV_union.
+  Definition subset := VV_subset.
+  Definition infinite := VV_infinity.
+  Definition power := VV_power.
+  Definition repl1 := VV_B_repl1.
+  Definition S_repl1 (a : set) : ({x : set | in_set x a} -> set) -> set.
+  Proof.
+  destruct a as [sa|la].
+    - apply (VV_S_repl1 (small sa)).
+    - intro x. exact empty.
+  Defined.
+
+  Definition wf_ax := VV_wf_ax'.
+  Definition empty_ax :=  VV_empty_ax.
+  Definition pair_ax := VV_pair_ax.
+  Definition union_ax := VV_union_ax.
+  Definition subset_ax := VV_subset_ax'.
+  Definition infinity_ax1 := VV_infinity_ax1.
+  Definition infinity_ax2 := VV_infinity_ax2.
+  Definition power_ax := VV_power_ax.
+  Definition repl1_ax := VV_repl1_ax.
+
+  Lemma lift_S_repl1 : forall (a : set) (F : {x : set | in_set x a} -> set),
+      S_set a -> (forall x, S_set (F x)) -> eq_set (S_repl1 a F) (repl1 a F).
+  Admitted.
+
+  Definition empty_type := int_small_VV_empty.
+  Definition pair_type := int_small_VV_pair.
+  Definition union_type := int_small_VV_union.
+  Definition subset_type (x : set) (P : set -> Prop) :=
+    (int_small_VV_subset x P).
+  Definition infinite_type := int_small_VV_infinity.
+  Definition power_type := int_small_VV_power.
+  Definition S_repl1_type : forall a (F : {x : set | in_set x a} -> set),
+      S_set (S_repl1 a F).
+  Proof. destruct a; intros F; simpl; auto. Qed.
+End IZFU_Model.
+
+Export IZFU_Model.
