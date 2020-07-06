@@ -12,14 +12,22 @@ Module SyntaxCCU (Import M : CCU_Model) <: Syntax.
     Inductive lvl := small | large.
 
     Parameter max : (nat -> lvl) -> lvl.
+    Parameter max2 : lvl -> lvl -> lvl.
+
+
+    (* Option 1 *)
+    Parameter lset : X -> lvl -> Prop.
+
+    (* Option 2 *)
     Parameter tset : lvl -> Type.
+    Parameter inj : forall (ℓ : lvl), (tset ℓ) -> X.
+
 
     Definition term : Type :=
       option
         (forall (γ : nat -> lvl) (σ : (forall n, (tset (γ n)))),
-            (tset (max γ))).
+            {ℓ : lvl & (tset ℓ)}).
 
-    (* indépendant de γ? *)
     Parameter eq_term : term -> term -> Prop.
 
     Parameter const : X -> term.
@@ -30,29 +38,42 @@ Module SyntaxCCU (Import M : CCU_Model) <: Syntax.
     Parameter lift : forall (γ : nat -> lvl) n, (tset (γ n)) -> (tset (max γ)).
 
     Definition Ref (n : nat) : term :=
-      Some (fun γ σ => (lift γ n (σ n))).
+      Some (fun γ σ => existT _ (γ n) (σ n)).
+
+    Definition get_lvl (tm : term) γ σ : lvl :=
+      match tm with
+      | Some t => (projT1 (t γ σ))
+      | None => large
+      end.
 
     (* den (Some tm) γ σ := (tm γ σ) *)
     Parameter den : forall (tm : term) (γ : nat -> lvl)
-                           (σ : (forall n, tset (γ n))), (tset (max γ)).
+                           (σ : (forall n, tset (γ n))),
+        (tset (max2 (max γ) (get_lvl tm γ σ))).
 
+    (* Definition App (u v : term) : term := *)
+    (*   Some (fun γ σ => *)
+    (*           (let (ℓu,ℓv) := (get_lvl u γ σ, get_lvl v γ σ) in *)
+    (*            existT _ (max2 (max γ) (max2 ℓu ℓv)) *)
+    (*                   (app (inj ℓu (den u γ σ)) *)
+    (*                        (inj ℓv (den v γ σ))))). *)
 
-(*    Parameter app : ??? *)
-    Definition App (u v : term) : term :=
-      (fun γ σ =>
-         app (den u γ σ) (den v γ σ)).
+    (* S -> (S -> S) -> S    ok *)
+    (* B -> (B -> S) -> B    ok *)
+    (* S -> (S -> B) -> B    ok *)
+    (* S -> (B -> S) -> S    !! *)
 
-    Definition Abs (A M : term) : term :=
-      (fun γ σ =>
-         lam (den A γ σ)
-             (fun x => (den M (γ >> lvl(x)) (σ >> x)))).
+    (* Definition Abs (A M : term) : term := *)
+    (*   (fun γ σ => *)
+    (*      lam (inj (max γ) (den A γ σ)) *)
+    (*          (fun x => *)
+    (*             (let γ' := γ >> lvl(x) in *)
+    (*              (inj (max γ') (den M γ' (σ >> x)))))). *)
 
-
-
-    Definition Prod (A B : term) : term :=
-      (fun γ σ =>
-         prod (den A γ σ)
-              (fun x => den B (γ >> lvl(x)) (σ >> x))).
+    (* Definition Prod (A B : term) : term := *)
+    (*   (fun γ σ => *)
+    (*      prod (den A γ σ) *)
+    (*           (fun x => den B (γ >> lvl(x)) (σ >> x))). *)
 
     Parameter eq_sub : sub -> sub -> Prop.
     Parameter sub_id : sub.
